@@ -1,0 +1,113 @@
+name: "ryansingman/merge-bot"
+description: "Deployment merge handler."
+author: "Ryan Singman @ Cleanlab"
+inputs:
+  reviews_required: 
+    description: "if reviews are required to merge"
+    required: false
+    default: true
+  dependent_checks:
+    description: "comma separated list of checks to depend on"
+    required: false
+    default: ""
+  check_status_required:
+    description: "status value(s) for check to be considered passed (as comma separated list)"
+    required: false
+    default: "success"
+  blocking_label:
+    description: "label to block merge on (leave empty to disable behavior)"
+    required: false
+    default: ""
+  delete_branch:
+    description: "if should delete source branch of PR after successful merge"
+    required: false
+    default: false
+  merge_type:
+    description: "type of merge to use (merge or fast-forward)"
+    required: true
+  
+
+runs:
+  using: composite
+
+  steps:
+    - uses: actions/checkout@v3
+
+    - run: |
+        python $GITHUB_ACTION_PATH/merge_bot/check_blocking_label.py \
+        --blocking-label ${{ inputs.blocking_label }} \
+        --labels ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+        if [ $? -ne 0 ]
+        then
+          exit 1
+        fi
+      shell: bash
+
+    # install Python dependencies for action
+    - run: |
+        pip install -r $GITHUB_ACTION_PATH/requirements.txt
+      shell: bash
+
+    # if reviews_required, check all reviews are passing
+    - if: ${{ inputs.reviews_required }}
+      run: |
+        GITHUB_TOKEN=${{ github.token }} \
+        python $GITHUB_ACTION_PATH/merge_bot/check_review_approval.py \
+        --repository ${{ github.repository }} \
+        --pull-request-number ${{ github.event.pull_request.number }}
+      shell: bash
+
+    # if dependent checks, check all checks have required check status
+    - if: ${{ inputs.dependent_checks }}
+      run: |
+        GITHUB_TOKEN=${{ github.token }} \
+        python $GITHUB_ACTION_PATH/merge_bot/check_dependent_checks.py \
+        --checks ${{ inputs.dependent_checks }} \
+        --repository ${{ github.repository }} \
+        --head-sha ${{ github.event.pull_request.head.sha }} \
+        --passing-check-statuses ${{ inputs.check_status_required }}
+      shell: bash
+
+    # merge PR using merge type
+    - run: |
+        case "${{ inputs.merge_type }}" in
+          "fast-forward")
+            echo "Attempting fast-forward merge."
+            HEAD_REF='${{ github.event.pull_request.head.ref }}'; \
+            BASE_REF='${{ github.event.pull_request.base.ref }}'; \
+            git fetch --all && \
+            git checkout $BASE_REF && \
+            git pull && \
+            git merge --ff-only origin/$HEAD_REF && \
+            git push
+            ;;
+          "merge")
+            echo "Performing merge."
+            HEAD_REF='${{ github.event.pull_request.head.ref }}'; \
+            BASE_REF='${{ github.event.pull_request.base.ref }}'; \
+            git fetch --all && \
+            git checkout $BASE_REF && \
+            git pull && \
+            git merge origin/$HEAD_REF && \
+            git push
+            ;;
+            ;;
+          *)
+            echo "Invalid merge type: ${{ inputs.merge_type }}"
+            exit 1
+        esac
+      shell: bash
+
+    # if failed to merge, print message
+    - if: failure()
+      run:
+        echo "Failed to merge -- exiting."
+      shell: bash
+
+    # if delete source branch, delete branch
+    - if: success() && ${{ inputs.delete_branch }}
+      run: |
+        echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
+        git push --delete origin ${{ github.event.pull_request.head.ref }}
+      shell: bash
+        
