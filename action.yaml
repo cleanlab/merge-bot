@@ -1,4 +1,4 @@
-name: "ryansingman/merge-bot"
+name: "cleanlab/merge-bot"
 description: "Deployment merge handler."
 author: "Ryan Singman @ Cleanlab"
 inputs:
