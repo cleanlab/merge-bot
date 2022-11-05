@@ -91,10 +91,10 @@ runs:
             git merge origin/$HEAD_REF && \
             git push
             ;;
-            ;;
           *)
             echo "Invalid merge type: ${{ inputs.merge_type }}"
             exit 1
+            ;;
         esac
       shell: bash
 
