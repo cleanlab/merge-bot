@@ -76,4 +76,4 @@ if __name__ == "__main__":
     passing_statuses: List[str] = args.passing_check_statuses.split(",")
 
     if not check_statuses_of_checks(checks, args.repository, args.head_sha, passing_statuses):
-        exit(1)
+        exit(0)

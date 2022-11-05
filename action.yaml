@@ -33,14 +33,11 @@ runs:
   steps:
     - uses: actions/checkout@v3
 
-    - run: |
+    - id: blocking_label_check
+      run: |
         python $GITHUB_ACTION_PATH/merge_bot/check_blocking_label.py \
         --blocking-label ${{ inputs.blocking_label }} \
         --labels ${{ join(github.event.pull_request.labels.*.name, ' ') }}
-        if [ $? -ne 0 ]
-        then
-          exit 1
-        fi
       shell: bash
 
     # install Python dependencies for action
@@ -49,7 +46,8 @@ runs:
       shell: bash
 
     # if reviews_required, check all reviews are passing
-    - if: ${{ inputs.reviews_required }}
+    - id: review_check
+      if: ${{ inputs.reviews_required }}
       run: |
         GITHUB_TOKEN=${{ github.token }} \
         python $GITHUB_ACTION_PATH/merge_bot/check_review_approval.py \
@@ -58,7 +56,8 @@ runs:
       shell: bash
 
     # if dependent checks, check all checks have required check status
-    - if: ${{ inputs.dependent_checks }}
+    - id: dependents_check
+      if: ${{ inputs.dependent_checks }}
       run: |
         GITHUB_TOKEN=${{ github.token }} \
         python $GITHUB_ACTION_PATH/merge_bot/check_dependent_checks.py \
@@ -69,7 +68,8 @@ runs:
       shell: bash
 
     # merge PR using merge type
-    - run: |
+    - id: merge
+      run: |
         case "${{ inputs.merge_type }}" in
           "fast-forward")
             echo "Attempting fast-forward merge."
@@ -105,7 +105,7 @@ runs:
       shell: bash
 
     # if delete source branch, delete branch
-    - if: success() && ${{ inputs.delete_branch }}
+    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.conclusion == 'success' }}
       run: |
         echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
         git push --delete origin ${{ github.event.pull_request.head.ref }}
