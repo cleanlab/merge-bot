@@ -89,7 +89,9 @@ runs:
             git checkout $BASE_REF && \
             git pull && \
             git merge --ff-only origin/$HEAD_REF && \
-            git push
+            git push && \
+            echo "success=1" >> $GITHUB_OUTPUT || \
+            echo "success=0" >> $GITHUB_OUTPUT
             ;;
           "merge")
             echo "Performing merge."
@@ -100,6 +102,8 @@ runs:
             git pull && \
             git merge origin/$HEAD_REF && \
             git push
+            echo "success=1" >> $GITHUB_OUTPUT || \
+            echo "success=0" >> $GITHUB_OUTPUT
             ;;
           *)
             echo "Invalid merge type: ${{ inputs.merge_type }}"
@@ -115,7 +119,7 @@ runs:
       shell: bash
 
     # if delete source branch, delete branch
-    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.conclusion == 'success' }}
+    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.outputs.success == 1 }}
       run: |
         echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
         git push --delete origin ${{ github.event.pull_request.head.ref }}
