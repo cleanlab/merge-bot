@@ -76,8 +76,8 @@ runs:
     # merge PR using merge type
     - id: merge
       if: |
-        steps.blocking_label_check.outputs.success == 1 && \
-        steps.review_check.outputs.success == 1 && \
+        steps.blocking_label_check.outputs.success == 1 &&
+        steps.review_check.outputs.success == 1 &&
         steps.dependents_check.outputs.success == 1
       run: |
         case "${{ inputs.merge_type }}" in
