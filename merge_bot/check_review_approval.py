@@ -105,7 +105,7 @@ if __name__ == "__main__":
             all_requested_reviewers_have_reviewed = False
 
     if not all_requested_reviewers_have_reviewed:
-        exit(1)
+        exit(0)
 
     # exit w/ non-zero code if not all reviewers approve
     if not all(reviewer_approvals):
