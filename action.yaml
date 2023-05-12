@@ -84,7 +84,7 @@ runs:
       continue-on-error: true
     
     # if delete source branch, delete branch
-    - if: ${{ success() && inputs.delete_branch }} && steps.merge.outcome == 'success' }}
+    - if: ${{ success() && inputs.delete_branch && steps.merge.outcome == 'success' }}
       run: |
         echo "${{ steps.merge }}"
         echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
