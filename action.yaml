@@ -75,11 +75,7 @@ runs:
 
     # merge PR using merge type
     - id: merge
-      if: | ${{
-        steps.blocking_label_check.outputs.success == 1 &&
-        steps.review_check.outputs.success == 1 &&
-        steps.dependents_check.outputs.success == 1
-        }}
+      if: ${{ steps.blocking_label_check.outputs.success == 1 && steps.review_check.outputs.success == 1 && steps.dependents_check.outputs.success == 1 }}
       uses: everlytic/branch-merge@1.1.5
       with:
         github_token: ${{ secrets.CLEANLAB_BOT_PAT }}
