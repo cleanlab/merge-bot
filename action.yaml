@@ -116,6 +116,7 @@ runs:
     - if: failure()
       run:
         echo "Failed to merge -- exiting."
+        exit 0
       shell: bash
 
     # if delete source branch, delete branch
