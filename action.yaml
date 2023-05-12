@@ -75,45 +75,20 @@ runs:
 
     # merge PR using merge type
     - id: merge
-      if: |
+      if: | ${{
         steps.blocking_label_check.outputs.success == 1 &&
         steps.review_check.outputs.success == 1 &&
         steps.dependents_check.outputs.success == 1
-      run: |
-        case "${{ inputs.merge_type }}" in
-          "fast-forward")
-            echo "Attempting fast-forward merge."
-            HEAD_REF='${{ github.event.pull_request.head.ref }}'; \
-            BASE_REF='${{ github.event.pull_request.base.ref }}'; \
-            git fetch --all && \
-            git checkout $BASE_REF && \
-            git pull && \
-            git merge --ff-only origin/$HEAD_REF && \
-            git push && \
-            echo "success=1" >> $GITHUB_OUTPUT || \
-            echo "success=0" >> $GITHUB_OUTPUT
-            ;;
-          "merge")
-            echo "Performing merge."
-            HEAD_REF='${{ github.event.pull_request.head.ref }}'; \
-            BASE_REF='${{ github.event.pull_request.base.ref }}'; \
-            git fetch --all && \
-            git checkout $BASE_REF && \
-            git pull && \
-            git merge origin/$HEAD_REF && \
-            git push && \
-            echo "success=1" >> $GITHUB_OUTPUT || \
-            echo "success=0" >> $GITHUB_OUTPUT
-            ;;
-          *)
-            echo "Invalid merge type: ${{ inputs.merge_type }}"
-            exit 1
-            ;;
-        esac
-      shell: bash
+        }}
+      uses: everlytic/branch-merge@1.1.5
+      with:
+        github_token: ${{ secrets.CLEANLAB_BOT_PAT }}
+        source_ref: ${{ github.event.pull_request.head.ref }}
+        target_branch: ${{ github.event.pull_request.base.ref }}
+      continue-on-error: true
     
     # if delete source branch, delete branch
-    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.outputs.success == 1 }}
+    - if: ${{ success() && inputs.delete_branch }} && steps.merge.outcome == 'success' }}
       run: |
         echo "${{ steps.merge }}"
         echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
