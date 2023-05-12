@@ -111,6 +111,13 @@ runs:
             ;;
         esac
       shell: bash
+    
+    # if delete source branch, delete branch
+    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.outputs.success == 1 }}
+      run: |
+        echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
+        git push --delete origin ${{ github.event.pull_request.head.ref }}
+      shell: bash
 
     # if failed to merge, print message
     - if: failure()
@@ -118,11 +125,3 @@ runs:
         echo "Failed to merge -- exiting."
         exit 0
       shell: bash
-
-    # if delete source branch, delete branch
-    - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.outputs.success == 1 }}
-      run: |
-        echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
-        git push --delete origin ${{ github.event.pull_request.head.ref }}
-      shell: bash
-        
