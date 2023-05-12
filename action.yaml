@@ -115,6 +115,7 @@ runs:
     # if delete source branch, delete branch
     - if: success() && ${{ inputs.delete_branch }} && ${{ steps.merge.outputs.success == 1 }}
       run: |
+        echo "${{ steps.merge }}"
         echo "Deleting source branch: ${{ github.event.pull_request.head.ref }}"
         git push --delete origin ${{ github.event.pull_request.head.ref }}
       shell: bash
