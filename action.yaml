@@ -25,8 +25,8 @@ inputs:
   merge_type:
     description: "type of merge to use (merge or fast-forward)"
     required: true
-secrets:
-  CLEANLAB_BOT_PAT:
+  github_token:
+    description: "token used to access source repository"
     required: true
   
 
@@ -54,7 +54,7 @@ runs:
     - id: review_check
       if: ${{ inputs.reviews_required }}
       run: |
-        GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+        GITHUB_TOKEN=${{ inputs.github_token }} \
         python $GITHUB_ACTION_PATH/merge_bot/check_review_approval.py \
         --repository ${{ github.repository }} \
         --pull-request-number ${{ github.event.pull_request.number }} && \
@@ -66,7 +66,7 @@ runs:
     - id: dependents_check
       if: ${{ inputs.dependent_checks }}
       run: |
-        GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+        GITHUB_TOKEN=${{ inputs.github_token }} \
         python $GITHUB_ACTION_PATH/merge_bot/check_dependent_checks.py \
         --checks ${{ inputs.dependent_checks }} \
         --repository ${{ github.repository }} \
@@ -81,7 +81,7 @@ runs:
       if: ${{ steps.blocking_label_check.outputs.success == 1 && steps.review_check.outputs.success == 1 && steps.dependents_check.outputs.success == 1 }}
       uses: everlytic/branch-merge@1.1.5
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.github_token }}
         source_ref: ${{ github.event.pull_request.head.ref }}
         target_branch: ${{ github.event.pull_request.base.ref }}
       continue-on-error: true
