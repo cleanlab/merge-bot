@@ -19,6 +19,9 @@ def check_statuses_of_checks(checks: List[str], repository: str, head_sha: str, 
     """
     gh_api_response: requests.Response = requests.get(
         f"https://api.github.com/repos/{repository}/commits/{head_sha}/check-runs",
+        params={
+            "per_page": 100,
+        },
         headers={
             "Authorization": f"Bearer {GITHUB_TOKEN}",
             "Accept": "application/vnd.github+json",
